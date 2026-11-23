@@ -1,0 +1,40 @@
+name: beauty-booking-flask
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: beauty
+      POSTGRES_DB: beauty
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: Europe/Moscow
+    volumes:
+      - beauty_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/prices.sql:/docker-entrypoint-initdb.d/02-prices.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beauty -d beauty"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: beauty
+      PGDATABASE: beauty
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      TZ: Europe/Moscow
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./salon:/app/salon
+      - ./tests:/app/tests
+
+volumes:
+  beauty_data:
