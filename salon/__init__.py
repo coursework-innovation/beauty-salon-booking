@@ -1,6 +1,8 @@
-import os
+﻿import os
 
 from flask import Flask
+
+from .db import fetch_one
 
 
 def create_app():
@@ -9,6 +11,7 @@ def create_app():
 
     @app.get("/health")
     def health():
+        fetch_one("SELECT 1")
         return {"status": "ok"}
 
     return app
